@@ -9,4 +9,4 @@
 
 
 ## Принцип работы бота
-![Diagram](https://drive.google.com/file/d/1aOjn_jGSyj642WubnKPqiYYQPbP3knYT/view?usp=sharing)
+![Diagram](images/tg_bot_diagram.jpg)
