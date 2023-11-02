@@ -8,6 +8,7 @@
 3. Установите зависимости
 ``pip install -r requirements.txt``
 4. Запустить бота
+``python main.py``
 
 
 ## Принцип работы бота
