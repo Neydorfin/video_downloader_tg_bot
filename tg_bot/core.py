@@ -3,9 +3,9 @@ from telebot.types import Message, CallbackQuery
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 from config import BotSettings
-from common.states import States
-from common.text import TeleText
-from utils.keyboard import Buttons
+from tg_bot.common.states import States
+from tg_bot.common.text import TeleText
+from tg_bot.utils.keyboard import Buttons
 
 state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BotSettings.BOT_TOKEN, state_storage=state_storage)
@@ -140,7 +140,7 @@ def send_video(message: Message) -> None:
     main(message)
 
 
-if __name__ == '__main__':
+def run():
     bot.add_custom_filter(custom_filters.StateFilter(bot))
     bot.set_my_commands([
         telebot.types.BotCommand("start", "Запуск бота"),
@@ -150,3 +150,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("cancel", "Назад в Меню"),
     ])
     bot.polling()
+
+
+if __name__ == '__main__':
+    run()
