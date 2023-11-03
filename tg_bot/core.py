@@ -1,11 +1,15 @@
+import time
+
 import telebot
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 from config import BotSettings
 from tg_bot.common.states import States
 from tg_bot.common.text import TeleText
 from tg_bot.utils.keyboard import Buttons
+from database.core import DataBase
+from site_api_requests.youtube_requests.info import get_info
 
 state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BotSettings.BOT_TOKEN, state_storage=state_storage)
@@ -20,7 +24,24 @@ def main(message: Message) -> None:
 # команда запуска бота
 @bot.message_handler(commands=['start'])
 def start(message: Message) -> None:
-    bot.send_message(message.chat.id, TeleText.welcome, reply_markup=Buttons.remove)
+    print(message.from_user.id, "|", message.from_user.first_name)
+    User = DataBase.read(DataBase.db, DataBase.models.User, message.from_user.id)
+    if User is None:
+        user_data = {
+            "user_id": message.from_user.id,
+            "username": message.from_user.first_name,
+            "chat_id": message.chat.id,
+        }
+        config_data = {
+            "user_id": message.from_user.id,
+            "low": 240,
+            "high": 1080,
+            "info": True,
+        }
+        DataBase.write(DataBase.db, DataBase.models.User, user_data)
+        DataBase.write(DataBase.db, DataBase.models.UserConfig, config_data)
+    bot.send_message(message.chat.id, TeleText.welcome.format(name=message.from_user.first_name),
+                     reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.main, message.chat.id)
     main(message)
 
@@ -29,6 +50,7 @@ def start(message: Message) -> None:
 @bot.message_handler(state="*", commands=['help'])
 def help(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.help, reply_markup=Buttons.remove)
+    main(message)
 
 
 # команда вызова настроек
@@ -42,18 +64,61 @@ def custom(message: Message) -> None:
 @bot.message_handler(state=States.custom, commands=['low'])
 def custom_low(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.custom_low, reply_markup=Buttons.low_markup)
+    bot.set_state(message.from_user.id, States.custom_low, message.chat.id)
+
+
+# установка минимального разрешение видео
+@bot.message_handler(state=States.custom_low)
+def set_low_setting(message: Message) -> None:
+    if message.text in ["240p", "360p", "480p"]:
+        DataBase.update(DataBase.db, DataBase.models.UserConfig, {"low": message.text}, message.from_user.id)
+        bot.send_message(message.chat.id, TeleText.custom_low_set.format(res=message.text), reply_markup=Buttons.remove)
+    else:
+        bot.send_message(message.chat.id, TeleText.error_custom, reply_markup=Buttons.remove)
+    custom(message)
 
 
 # команда выбора максимального разрешение видео
 @bot.message_handler(state=States.custom, commands=['high'])
 def custom_high(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.custom_high, reply_markup=Buttons.high_markup)
+    bot.set_state(message.from_user.id, States.custom_high, message.chat.id)
+
+
+# установка максимального разрешение видео
+@bot.message_handler(state=States.custom_high)
+def set_high_setting(message: Message) -> None:
+    if message.text in ["1080p", "1440p", "2160p"]:
+        DataBase.update(DataBase.db, DataBase.models.UserConfig, {"high": message.text}, message.from_user.id)
+        bot.send_message(message.chat.id, TeleText.custom_high_set.format(res=message.text),
+                         reply_markup=Buttons.remove)
+    else:
+        bot.send_message(message.chat.id, TeleText.error_custom, reply_markup=Buttons.remove)
+    custom(message)
 
 
 # команда по поводу получение доп. информации про выидео
 @bot.message_handler(state=States.custom, commands=['info'])
 def custom_info(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.custom_info, reply_markup=Buttons.switch_markup)
+    bot.set_state(message.from_user.id, States.custom_info, message.chat.id)
+
+
+# установка настроек доп. информации про выидео
+@bot.message_handler(state=States.custom_info)
+def set_info_setting(message: Message) -> None:
+    set_info_dict = {
+        "ВКЛ": True,
+        "ВЫКЛ": False,
+    }
+    if message.text in ["ВКЛ", "ВЫКЛ"]:
+        DataBase.update(DataBase.db, DataBase.models.UserConfig, {"info": set_info_dict[message.text]},
+                        message.from_user.id)
+        bot.send_message(message.chat.id, TeleText.custom_info_set.format(swith=message.text),
+                         reply_markup=Buttons.remove)
+    else:
+        bot.send_message(message.chat.id, TeleText.error_custom, reply_markup=Buttons.remove)
+    custom(message)
 
 
 # команда отмены
@@ -81,7 +146,11 @@ def video_select(message: Message) -> None:
 # выво информации об видео с вопросом о продолжение скачивание
 @bot.message_handler(state=States.video_select)
 def about_video(message: Message) -> None:
-    bot.send_message(message.chat.id, TeleText.about_video, reply_markup=Buttons.answer_markup)
+    data = get_info(message.text)
+    bot.reply_to(message,
+                 text=TeleText.about_video.format(img=data["thumbnail"], title=data["title"], time=data["time"]),
+                 parse_mode='Markdown')
+    bot.send_message(message.chat.id, TeleText.answer_video, reply_markup=Buttons.answer_markup)
     bot.set_state(message.from_user.id, States.about_video, message.chat.id)
 
 
