@@ -1,6 +1,6 @@
-from typing import Dict, List, TypeVar, Tuple
+from typing import Dict, TypeVar
 from peewee import ModelSelect
-from database.common.models import db, BaseModel
+from database.common.models import db
 
 T = TypeVar("T")
 
@@ -11,8 +11,13 @@ def _store_date(database: db, model: T, data: Dict) -> None:
 
 
 def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
+    print("CRUD:", user_id)
     with database.atomic():
-        response = model.select().where(user_id == user_id)
+        # response = model.select().where(model.user_id == user_id)
+        try:
+            response = model.get_by_id(user_id)
+        except:
+            response = None
     return response
 
 

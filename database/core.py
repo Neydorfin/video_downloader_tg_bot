@@ -4,5 +4,23 @@ from database.utils.CRUD import CRUDInterface
 db.connect()
 db.create_tables([User, UserConfig, History])
 
-crud = CRUDInterface()
 
+class Models:
+    User = User
+    UserConfig = UserConfig
+    History = History
+
+
+class DataBase:
+    db = db
+
+    crud = CRUDInterface()
+    models = Models()
+    write = crud.create()
+    update = crud.update()
+    read = crud.retrieve()
+
+
+if __name__ == '__main__':
+    User = DataBase.models.User.get()
+    print(User.user_id, User.username)

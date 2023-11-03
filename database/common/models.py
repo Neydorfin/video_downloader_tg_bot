@@ -1,7 +1,7 @@
 import peewee as pw
 from datetime import datetime
 
-db = pw.SqliteDatabase('../tg_video_bot.db')
+db = pw.SqliteDatabase('tg_video_bot.db')
 
 
 class BaseModel(pw.Model):
@@ -19,8 +19,8 @@ class User(BaseModel):
 
 
 class History(BaseModel):
-    history_id = pw.AutoField()
-    user_id = pw.ForeignKeyField(User, backref='user_id')
+    user_id = pw.PrimaryKeyField(User.user_id)
+    history_id = pw.IntegerField()
     created_at = pw.DateField(default=datetime.now())
     link = pw.TextField()
     video_name = pw.TextField()
@@ -30,7 +30,9 @@ class History(BaseModel):
 
 
 class UserConfig(BaseModel):
-    user_id = pw.ForeignKeyField(User, backref='user_id')
+    class Meta:
+        db_table = "User_Config"
+    user_id = pw.PrimaryKeyField(User.user_id)
     low = pw.CharField(max_length=10)
     high = pw.CharField(max_length=10)
     info = pw.BooleanField()
