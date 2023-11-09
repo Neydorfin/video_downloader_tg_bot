@@ -27,20 +27,27 @@ class History(BaseModel):
     link = pw.TextField(null=True)
     video_id = pw.TextField(null=True)
     title = pw.TextField(null=True)
+    time_sec = pw.IntegerField(null=True)
     time = pw.TimeField(null=True)
     platform = pw.TextField(null=True)
     resolution = pw.TextField(null=True)
     thumbnail = pw.TextField(null=True)
     video_views = pw.IntegerField(null=True)
-    video_size = pw.IntegerField(null=True)
-    _140 = pw.TextField(null=True)
-    _242 = pw.TextField(null=True)
-    _18 = pw.TextField(null=True)
-    _244 = pw.TextField(null=True)
-    _22 = pw.TextField(null=True)
-    _137 = pw.TextField(null=True)
-    _271 = pw.TextField(null=True)
-    _313 = pw.TextField(null=True)
+    audio = pw.TextField(null=True)  # audio
+    _240 = pw.TextField(null=True)  # 240p
+    file_size_240 = pw.FloatField(null=True)  # 240p file_size
+    _360 = pw.TextField(null=True)  # 360p
+    file_size_360 = pw.FloatField(null=True)  # 360p file_size
+    _480 = pw.TextField(null=True)  # 480p
+    file_size_480 = pw.FloatField(null=True)  # 480p file_size
+    _720 = pw.TextField(null=True)  # 720p
+    file_size_720 = pw.FloatField(null=True)  # 720p file_size
+    _1080 = pw.TextField(null=True)  # 1080p
+    file_size_1080 = pw.FloatField(null=True)  # 1080p file_size
+    _1440 = pw.TextField(null=True)  # 1440p
+    file_size_1440 = pw.FloatField(null=True)  # 1440p file_size
+    _2160 = pw.TextField(null=True)  # 2160p
+    file_size_2160 = pw.FloatField(null=True)  # 2160p file_size
 
 
 class UserConfig(BaseModel):
