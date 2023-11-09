@@ -1,6 +1,6 @@
 from typing import Dict, TypeVar
 from peewee import ModelSelect
-from database.common.models import db
+from database.common.models import db, History, User, UserConfig
 
 T = TypeVar("T")
 
@@ -11,19 +11,23 @@ def _store_date(database: db, model: T, data: Dict) -> None:
 
 
 def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
-    print("CRUD:", user_id)
     with database.atomic():
-        # response = model.select().where(model.user_id == user_id)
-        try:
-            response = model.get_by_id(user_id)
-        except:
-            response = None
+        res = []
+        if model is not History:
+            response = model.get_or_none(user_id)
+        else:
+            for row in model.select().order_by(History.history_id.desc()).where(user_id == user_id).execute():
+                res.append(row)
+            response = res[0]
     return response
 
 
 def _update_data(database: db, model: T, data: Dict, user_id: int) -> None:
     with database.atomic():
-        model.update(**data).where(model.user_id == user_id).execute()
+        if model is not History:
+            model.update(**data).where(model.user_id == user_id).execute()
+        else:
+            model.update(**data).where(model.history_id == user_id).execute()
 
 
 class CRUDInterface:

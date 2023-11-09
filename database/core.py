@@ -22,5 +22,5 @@ class DataBase:
 
 
 if __name__ == '__main__':
-    User = DataBase.models.User.get()
-    print(User.user_id, User.username)
+    DataBase()
+
