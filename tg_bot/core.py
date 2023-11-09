@@ -1,7 +1,7 @@
 import time
 
 import telebot
-from telebot.types import Message
+from telebot.types import Message, CallbackQuery
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 from config import BotSettings
@@ -9,10 +9,18 @@ from tg_bot.common.states import States
 from tg_bot.common.text import TeleText
 from tg_bot.utils.keyboard import Buttons
 from database.core import DataBase
-from site_api_requests.youtube_requests.info import get_info
+from site_api_requests.youtube_requests.info import get_info_youtube
+from site_api_requests.youtube_requests.download import default_download
 
 state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BotSettings.BOT_TOKEN, state_storage=state_storage)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def to_main(call: CallbackQuery) -> None:
+    if call.data == "cancel":
+        bot.delete_message(message_id=call.message.id, chat_id=call.message.chat.id)
+        main(call.message)
 
 
 # МЕНЮ
@@ -24,12 +32,13 @@ def main(message: Message) -> None:
 # команда запуска бота
 @bot.message_handler(commands=['start'])
 def start(message: Message) -> None:
-    print(message.from_user.id, "|", message.from_user.first_name)
-    User = DataBase.read(DataBase.db, DataBase.models.User, message.from_user.id)
-    if User is None:
+    user = DataBase.read(DataBase.db, DataBase.models.User, message.from_user.id)
+    if user is None:
         user_data = {
             "user_id": message.from_user.id,
-            "username": message.from_user.first_name,
+            "username": message.from_user.username,
+            "first_name": message.from_user.first_name,
+            "last_name": message.from_user.last_name,
             "chat_id": message.chat.id,
         }
         config_data = {
@@ -48,7 +57,7 @@ def start(message: Message) -> None:
 
 # команда вызова помощи
 @bot.message_handler(state="*", commands=['help'])
-def help(message: Message) -> None:
+def help_command(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.help, reply_markup=Buttons.remove)
     main(message)
 
@@ -56,7 +65,7 @@ def help(message: Message) -> None:
 # команда вызова настроек
 @bot.message_handler(commands=['custom'])
 def custom(message: Message) -> None:
-    bot.send_message(message.chat.id, TeleText.custom, reply_markup=Buttons.remove)
+    bot.send_message(message.chat.id, TeleText.custom, reply_markup=Buttons.cancel_markup)
     bot.set_state(message.from_user.id, States.custom, message.chat.id)
 
 
@@ -129,7 +138,7 @@ def cancel(message: Message) -> None:
     main(message)
 
 
-# пользователб выбирает платформу с которой он будет скачивать видео
+# пользователь выбирает платформу с которой он будет скачивать видео
 @bot.message_handler(state=States.main, commands=['download'])
 def platform_select(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.platform_select, reply_markup=Buttons.platform_markup)
@@ -139,6 +148,11 @@ def platform_select(message: Message) -> None:
 # читаем ссылку от пользователя
 @bot.message_handler(state=States.platform_select)
 def video_select(message: Message) -> None:
+    data = {
+        "user_id": message.from_user.id,
+        "platform": message.text,
+    }
+    DataBase.write(DataBase.db, DataBase.models.History, data=data)
     bot.send_message(message.chat.id, TeleText.video_select, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.video_select, message.chat.id)
 
@@ -146,10 +160,25 @@ def video_select(message: Message) -> None:
 # выво информации об видео с вопросом о продолжение скачивание
 @bot.message_handler(state=States.video_select)
 def about_video(message: Message) -> None:
-    data = get_info(message.text)
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    print(session)
+    data = {}
+    if session.platform == "YouTube":
+        data = get_info_youtube(message.text)
+    # elif session.platform == "Vk":
+    #     data = get_info_vk(message.text)
+    # elif session.platform == "Coub":
+    #     data = get_info_coub(message.text)
+    else:
+        bot.send_message(message.chat.id, TeleText.error_platform, reply_markup=Buttons.remove)
+        cancel(message)
     bot.reply_to(message,
-                 text=TeleText.about_video.format(img=data["thumbnail"], title=data["title"], time=data["time"]),
+                 text=TeleText.about_video.format(img=data["thumbnail"], title=data["title"],
+                                                  time=data["time"]),
                  parse_mode='Markdown')
+    data.update({"link": message.text})
+
+    DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.answer_video, reply_markup=Buttons.answer_markup)
     bot.set_state(message.from_user.id, States.about_video, message.chat.id)
 
@@ -164,6 +193,11 @@ def resolution_select(message: Message) -> None:
 # выбор минимального разрешение
 @bot.message_handler(state=States.resolution_select, commands=['low'])
 def low(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    data = {
+        "resolution": "low",
+    }
+    DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.low, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.download, message.chat.id)
     download(message)
@@ -172,6 +206,11 @@ def low(message: Message) -> None:
 # выбор максимального разрешение
 @bot.message_handler(state=States.resolution_select, commands=['high'])
 def high(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    data = {
+        "resolution": "high",
+    }
+    DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.high, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.download, message.chat.id)
     download(message)
@@ -180,6 +219,11 @@ def high(message: Message) -> None:
 # выбор разрешение по умолчанию
 @bot.message_handler(state=States.resolution_select, commands=['default'])
 def default(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    data = {
+        "resolution": "default",
+    }
+    DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.default, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.download, message.chat.id)
     download(message)
@@ -188,7 +232,10 @@ def default(message: Message) -> None:
 # скачивание видео
 @bot.message_handler(state=States.download)
 def download(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
     bot.send_message(message.chat.id, TeleText.start_download, reply_markup=Buttons.remove)
+    if session.platform == "YouTube":
+        default_download(session)
     bot.set_state(message.from_user.id, States.video_maker, message.chat.id)
     video_maker(message)
 
@@ -204,6 +251,8 @@ def video_maker(message: Message) -> None:
 # отправка видео
 @bot.message_handler(state=States.send_video)
 def send_video(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    bot.send_video(message.chat.id, video=open(f"resources/video/{session.video_id}.mp4", "rb"))
     bot.send_message(message.chat.id, TeleText.sending_video, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.main, message.chat.id)
     main(message)

@@ -4,7 +4,7 @@ from telebot import types
 class Buttons:
     # platform selector
     platform_markup = types.ReplyKeyboardMarkup(row_width=1)
-    _YouTube_button = types.KeyboardButton("Youtube")
+    _YouTube_button = types.KeyboardButton("YouTube")
     _Vk_button = types.KeyboardButton("Vk")
     _Coub_button = types.KeyboardButton("Coub")
     platform_markup.add(_YouTube_button, _Vk_button, _Coub_button)
@@ -34,6 +34,11 @@ class Buttons:
     _yes_button = types.KeyboardButton("Да")
     _no_button = types.KeyboardButton("Нет")
     answer_markup.add(_yes_button, _no_button)
+
+    # to main
+    cancel_markup = types.InlineKeyboardMarkup(row_width=1)
+    _cancel_button = types.InlineKeyboardButton("Cancel", callback_data="cancel")
+    cancel_markup.add(_cancel_button)
 
     # remove keyboard
     remove = types.ReplyKeyboardRemove()
