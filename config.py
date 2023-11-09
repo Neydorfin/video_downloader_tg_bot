@@ -14,5 +14,4 @@ class BotSettings:
 if BotSettings.BOT_TOKEN is None:
     exit('BOT_TOKEN отсутствует в переменных окружения')
 
-
 COUB_HOST_API = "https://coub.com/api/v2/coubs"
