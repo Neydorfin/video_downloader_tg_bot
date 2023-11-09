@@ -34,7 +34,11 @@ class TeleText:
     low: str = "Выбранно минимальное разрешение для скачивание видео"
     high: str = "Выбранно максимальное разрешение для скачивание видео"
     default: str = "Выбранно обычное разрешение для скачивание видео"
-    about_video: str = "Назвние: [{title}]({img})\nДлина видео: {time}"
+    about_video: str = ("Назвние: [{title}]({img})\n"
+                        "Длина видео: {time}\n"
+                        "Размер файла ({low_res}p): {low} мб\n"
+                        "Размер файла ({high_res}p): {high} мб\n"
+                        "Размер файла (720p): {default} мб\n")
     answer_video: str = "Это ваше видео?"
     start_download: str = "Начало скачивание"
     video_processing: str = "Видео обрабатывается"
