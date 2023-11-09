@@ -9,13 +9,10 @@ else:
 
 class BotSettings:
     BOT_TOKEN = os.getenv('BOT_TOKEN', None)
-    YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', None)
 
 
 if BotSettings.BOT_TOKEN is None:
     exit('BOT_TOKEN отсутствует в переменных окружения')
 
-if BotSettings.YOUTUBE_API_KEY is None:
-    exit('YOUTUBE_API_KEY отсутствует в переменных окружения')
 
 COUB_HOST_API = "https://coub.com/api/v2/coubs"
