@@ -2,13 +2,14 @@ import telebot
 from telebot.types import Message, CallbackQuery
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
-from config import BotSettings, resolution_config
+from config import BotSettings
 from tg_bot.common.states import States
 from tg_bot.common.text import TeleText
 from tg_bot.utils.keyboard import Buttons
 from database.core import DataBase
 from site_api_requests.youtube_requests.info import get_info_youtube
 from site_api_requests.youtube_requests.download import default_download
+from video_procesing.video_combine_audio import combine_audio
 
 state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BotSettings.BOT_TOKEN, state_storage=state_storage)
@@ -146,7 +147,7 @@ def platform_select(message: Message) -> None:
 # читаем ссылку от пользователя
 @bot.message_handler(state=States.platform_select)
 def video_select(message: Message) -> None:
-    if message.text not in ["YouTube", "Vk", "Coub"]:
+    if message.text not in ["YouTube"]:  # , "Vk", "Coub"
         bot.send_message(message.chat.id, TeleText.error_platform, reply_markup=Buttons.remove)
         cancel(message)
     else:
@@ -162,32 +163,40 @@ def video_select(message: Message) -> None:
 # выво информации об видео с вопросом о продолжение скачивание
 @bot.message_handler(state=States.video_select)
 def about_video(message: Message) -> None:
+    error = False
     session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
     user_config = DataBase.read(DataBase.db, DataBase.models.UserConfig, user_id=message.from_user.id)
-    print(session)
     data = {}
     if session.platform == "YouTube":
-        data = get_info_youtube(message.text)
+        try:
+            data = get_info_youtube(message.text)
+        except:
+            bot.reply_to(message, text=TeleText.error_video, )
+            error = True
+
     # elif session.platform == "Vk":
     #     data = get_info_vk(message.text)
     # elif session.platform == "Coub":
     #     data = get_info_coub(message.text)
+    if not error:
+        bot.reply_to(message, text=TeleText.about_video.format(img=data["thumbnail"],
+                                                               title=data["title"],
+                                                               time=data["time"],
+                                                               low_res=user_config.low,
+                                                               low=data["_".join(("file_size", str(user_config.low)))],
+                                                               high_res=user_config.high,
+                                                               high=data[
+                                                                   "_".join(("file_size", str(user_config.high)))],
+                                                               default=data['file_size_720']),
+                     parse_mode='Markdown')
 
-    bot.reply_to(message, text=TeleText.about_video.format(img=data["thumbnail"],
-                                                           title=data["title"],
-                                                           time=data["time"],
-                                                           low_res=user_config.low,
-                                                           low=data["_".join(("file_size", str(user_config.low)))],
-                                                           high_res=user_config.high,
-                                                           high=data["_".join(("file_size", str(user_config.high)))],
-                                                           default=data['file_size_720']),
-                 parse_mode='Markdown')
+        data.update({"link": message.text})
 
-    data.update({"link": message.text})
-
-    DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
-    bot.send_message(message.chat.id, TeleText.answer_video, reply_markup=Buttons.answer_markup)
-    bot.set_state(message.from_user.id, States.about_video, message.chat.id)
+        DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
+        bot.send_message(message.chat.id, TeleText.answer_video, reply_markup=Buttons.answer_markup)
+        bot.set_state(message.from_user.id, States.about_video, message.chat.id)
+    else:
+        cancel(message)
 
 
 @bot.message_handler(state=States.about_video)  # выбор разрешение видео
@@ -208,8 +217,8 @@ def low(message: Message) -> None:
     }
     DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.low, reply_markup=Buttons.remove)
-    bot.set_state(message.from_user.id, States.download, message.chat.id)
-    download(message)
+    bot.set_state(message.from_user.id, States.video_maker, message.chat.id)
+    video_maker(message)
 
 
 # выбор максимального разрешение
@@ -222,8 +231,8 @@ def high(message: Message) -> None:
     }
     DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
     bot.send_message(message.chat.id, TeleText.high, reply_markup=Buttons.remove)
-    bot.set_state(message.from_user.id, States.download, message.chat.id)
-    download(message)
+    bot.set_state(message.from_user.id, States.video_maker, message.chat.id)
+    video_maker(message)
 
 
 # выбор разрешение по умолчанию
@@ -246,26 +255,40 @@ def download(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.start_download, reply_markup=Buttons.remove)
     if session.platform == "YouTube":
         default_download(session)
-    bot.set_state(message.from_user.id, States.video_maker, message.chat.id)
-    video_maker(message)
+    bot.set_state(message.from_user.id, States.send_video, message.chat.id)
+    send_video(message)
 
 
 # обработка видео
 @bot.message_handler(state=States.video_maker)
 def video_maker(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
     bot.send_message(message.chat.id, TeleText.video_processing, reply_markup=Buttons.remove)
-    bot.set_state(message.from_user.id, States.send_video, message.chat.id)
-    send_video(message)
+    resolution = session.resolution
+    video = getattr(session, "".join(("_", resolution)))
+    try:
+        combine_audio(video, session.audio, session.video_id)
+    except:
+        bot.send_message(message.chat.id, TeleText.error_video_maker, reply_markup=Buttons.remove)
+        main(message)
+    else:
+        bot.set_state(message.from_user.id, States.send_video, message.chat.id)
+        send_video(message)
 
 
 # отправка видео
 @bot.message_handler(state=States.send_video)
 def send_video(message: Message) -> None:
     session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
-    bot.send_video(message.chat.id, open(f"resources/video/{session.video_id}.mp4", "rb"))
-    bot.send_message(message.chat.id, TeleText.sending_video, reply_markup=Buttons.remove)
-    bot.set_state(message.from_user.id, States.main, message.chat.id)
-    main(message)
+    try:
+        bot.send_video(message.chat.id, open(f"resources/video/{session.video_id}.mp4", "rb"))
+    except:
+        bot.send_message(message.chat.id, TeleText.error_sending_video, reply_markup=Buttons.remove)
+        main(message)
+    else:
+        bot.send_message(message.chat.id, TeleText.sending_video, reply_markup=Buttons.remove)
+        bot.set_state(message.from_user.id, States.main, message.chat.id)
+        main(message)
 
 
 def run():

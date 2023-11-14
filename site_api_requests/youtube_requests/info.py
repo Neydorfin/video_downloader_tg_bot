@@ -11,8 +11,6 @@ def get_info_youtube(link):
             if old_file_size is None or old_file_size > new_file_size:
                 data["".join(("_", str(height)))] = frmt['url']
                 data["_".join(("file_size", str(height)))] = round(new_file_size, 2)
-                print(f"{height} | {frmt['averageBitrate']} |"
-                      f" {audio_size} | {data['_'.join(('file_size', str(height)))]}")
 
     video = YouTube(link)
     _time = time.strftime("%H:%M:%S", time.gmtime(video.length))
@@ -47,7 +45,6 @@ def get_info_youtube(link):
         if tag == 140:
             audio_size = round(video.streams.get_by_itag(140).filesize_mb, 2)
             data["audio"] = frmt["url"]
-    print(audio_size)
     for frmt in video.streaming_data['formats']:
         tag = frmt["itag"]
         if tag == 22:
