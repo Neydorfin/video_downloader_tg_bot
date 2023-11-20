@@ -12,4 +12,4 @@
 
 
 ## Принцип работы бота
-![Diagram](images/tg_bot_diagram.jpg)
+![Diagram](resources/images/tg_bot_diagram.jpg)
