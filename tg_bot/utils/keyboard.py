@@ -5,9 +5,8 @@ class Buttons:
     # platform selector
     platform_markup = types.ReplyKeyboardMarkup(row_width=1)
     _YouTube_button = types.KeyboardButton("YouTube")
-    _Vk_button = types.KeyboardButton("Vk")
     _Coub_button = types.KeyboardButton("Coub")
-    platform_markup.add(_YouTube_button, _Vk_button, _Coub_button)
+    platform_markup.add(_YouTube_button, _Coub_button)
 
     # low resolution selector
     low_markup = types.ReplyKeyboardMarkup(row_width=1)
