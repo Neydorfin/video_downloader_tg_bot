@@ -1,0 +1,2 @@
+class SiteRequests:
+    pass
