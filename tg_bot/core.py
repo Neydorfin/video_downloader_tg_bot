@@ -176,11 +176,11 @@ def about_video(message: Message) -> None:
             error = True
 
     elif session.platform == "Coub":
-        # try:
-        data = get_info_coub(message.text)
-        # except BaseException:
-        #     bot.reply_to(message, text=TeleText.error_video, )
-        #     error = True
+        try:
+            data = get_info_coub(message.text)
+        except BaseException:
+            bot.reply_to(message, text=TeleText.error_video, )
+            error = True
 
     if not error:
         if session.platform == "YouTube":
@@ -279,7 +279,7 @@ def default(message: Message) -> None:
         }
         DataBase.update(DataBase.db, DataBase.models.History, data=data, user_id=session)
         bot.send_message(message.chat.id, TeleText.default, reply_markup=Buttons.remove)
-        bot.set_state(message.from_user.id, States.download, message.chat.id)
+        bot.set_state(message.from_user.id, States.video_maker, message.chat.id)
         video_maker(message)
 
 
@@ -301,26 +301,14 @@ def video_maker(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.video_processing, reply_markup=Buttons.remove)
     resolution = session.resolution
     video = getattr(session, "".join(("_", resolution)))
-    if session.platform == "YouTube":
-        try:
-            VideoMaker.combine_audio(video, session.audio, session.video_id)
-        except:
-            bot.send_message(message.chat.id, TeleText.error_video_maker, reply_markup=Buttons.remove)
-            main(message)
-        else:
-            bot.set_state(message.from_user.id, States.send_video, message.chat.id)
-            send_video(message)
-    elif session.platform == "Coub":
-        try:
-            resolution = session.resolution
-            video = getattr(session, "".join(("_", resolution)))
-            VideoMaker.combine_audio(video, session.audio, session.video_id)
-        except:
-            bot.send_message(message.chat.id, TeleText.error_video_maker, reply_markup=Buttons.remove)
-            main(message)
-        else:
-            bot.set_state(message.from_user.id, States.send_video, message.chat.id)
-            send_video(message)
+    try:
+        VideoMaker.combine_audio(video, session.audio, session.video_id)
+    except:
+        bot.send_message(message.chat.id, TeleText.error_video_maker, reply_markup=Buttons.remove)
+        cancel(message)
+    else:
+        bot.set_state(message.from_user.id, States.send_video, message.chat.id)
+        send_video(message)
 
 
 # отправка видео
@@ -331,11 +319,11 @@ def send_video(message: Message) -> None:
         bot.send_video(message.chat.id, open(f"resources/video/{session.video_id}.mp4", "rb"))
     except:
         bot.send_message(message.chat.id, TeleText.error_sending_video, reply_markup=Buttons.remove)
-        main(message)
+        cancel(message)
     else:
         bot.send_message(message.chat.id, TeleText.sending_video, reply_markup=Buttons.remove)
         bot.set_state(message.from_user.id, States.main, message.chat.id)
-        main(message)
+        cancel(message)
 
 
 def run():
