@@ -7,9 +7,7 @@ from tg_bot.common.states import States
 from tg_bot.common.text import TeleText
 from tg_bot.utils.keyboard import Buttons
 from database.core import DataBase
-from site_api_requests.youtube_requests.info import get_info_youtube
-from site_api_requests.youtube_requests.download import default_download
-from site_api_requests.coub_requests.info import get_info_coub
+from site_api_requests.core import SiteRequests
 from video_procesing.video_combine_audio import VideoMaker
 
 state_storage = StateMemoryStorage()
@@ -170,14 +168,14 @@ def about_video(message: Message) -> None:
     data = {}
     if session.platform == "YouTube":
         try:
-            data = get_info_youtube(message.text)
+            data = SiteRequests.YouTube.get_info_youtube(message.text)
         except BaseException:
             bot.reply_to(message, text=TeleText.error_video, )
             error = True
 
     elif session.platform == "Coub":
         try:
-            data = get_info_coub(message.text)
+            data = SiteRequests.Coub.get_info_coub(message.text)
         except BaseException:
             bot.reply_to(message, text=TeleText.error_video, )
             error = True
@@ -231,7 +229,7 @@ def resolution_select(message: Message) -> None:
             bot.send_message(message.chat.id, TeleText.resolution_select
                              .format(low_res=user_config.low,
                                      low=session.file_size_360,
-                                     high_res=user_config.high,
+                                     high_res=720,
                                      high=session.file_size_720,
                                      default=session.file_size_720), reply_markup=Buttons.remove)
         bot.set_state(message.from_user.id, States.resolution_select, message.chat.id)
@@ -304,7 +302,7 @@ def download(message: Message) -> None:
     session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
     bot.send_message(message.chat.id, TeleText.start_download, reply_markup=Buttons.remove)
     if session.platform == "YouTube":
-        default_download(session)
+        SiteRequests.YouTube.default_download(session)
     bot.set_state(message.from_user.id, States.send_video, message.chat.id)
     send_video(message)
 
