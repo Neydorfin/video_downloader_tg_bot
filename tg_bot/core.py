@@ -215,10 +215,25 @@ def about_video(message: Message) -> None:
 
 @bot.message_handler(state=States.about_video)  # выбор разрешение видео
 def resolution_select(message: Message) -> None:
+    session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
+    user_config = DataBase.read(DataBase.db, DataBase.models.UserConfig, user_id=message.from_user.id)
     if message.text == "Нет":
         cancel(message)
     else:
-        bot.send_message(message.chat.id, TeleText.resolution_select, reply_markup=Buttons.remove)
+        if session.platform == "YouTube":
+            bot.send_message(message.chat.id, TeleText.resolution_select
+                             .format(low_res=user_config.low,
+                                     low=getattr(session, "_".join(("file_size", str(user_config.low)))),
+                                     high_res=user_config.high,
+                                     high=getattr(session, "_".join(("file_size", str(user_config.high)))),
+                                     default=session.file_size_720), reply_markup=Buttons.remove)
+        elif session.platform == "Coub":
+            bot.send_message(message.chat.id, TeleText.resolution_select
+                             .format(low_res=user_config.low,
+                                     low=session.file_size_360,
+                                     high_res=user_config.high,
+                                     high=session.file_size_720,
+                                     default=session.file_size_720), reply_markup=Buttons.remove)
         bot.set_state(message.from_user.id, States.resolution_select, message.chat.id)
 
 
