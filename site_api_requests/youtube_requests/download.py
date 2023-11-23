@@ -1,7 +1,17 @@
 from pytube import YouTube
+from database.core import DataBase
 
 
-def default_download(data) -> None:
+def default_download(data: DataBase.models.History) -> None:
+    """
+        Скачивает видео с YouTube в наивысшем разрешении.
+
+        Args:
+            data (History): Информация о видео.
+
+        Returns:
+            None
+    """
     video = YouTube(data.link)
     youtube_object = video.streams.get_highest_resolution()
     try:

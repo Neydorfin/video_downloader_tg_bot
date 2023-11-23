@@ -1,23 +1,20 @@
 import moviepy.editor as mpe
-import argparse
 
 
 class VideoMaker:
-
-    # @staticmethod
-    # def combine_audio(video, audio, output):
-    #     output = f"resources/video/{output}.mp4"
-    #     # загрузка видео
-    #     video_clip = mpe.VideoFileClip(video)
-    #     # загрузка звука
-    #     audio_clip = mpe.AudioFileClip(audio)
-    #     # добавить звук к видео
-    #     final_clip = video_clip.set_audio(audio_clip)
-    #     # сохранить готовый клип
-    #     final_clip.write_videofile(output)
-
     @staticmethod
     def combine_audio(video, audio, output):
+        """
+            Комбинирует видео и аудио, сохраняя результат в новом файле.
+
+            Args:
+                video (str): Путь к видеофайлу.
+                audio (str): Путь к аудиофайлу.
+                output (str): Имя для сохраняемого файла.
+
+            Returns:
+                None
+        """
         output = f"resources/video/{output}.mp4"
         # загрузка видео
         video_clip = mpe.VideoFileClip(video)
