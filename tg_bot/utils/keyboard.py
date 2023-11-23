@@ -2,43 +2,42 @@ from telebot import types
 
 
 class Buttons:
-    # platform selector
+    # Селектор платформы
     platform_markup = types.ReplyKeyboardMarkup(row_width=1)
     _YouTube_button = types.KeyboardButton("YouTube")
-    _Vk_button = types.KeyboardButton("Vk")
     _Coub_button = types.KeyboardButton("Coub")
-    platform_markup.add(_YouTube_button, _Vk_button, _Coub_button)
+    platform_markup.add(_YouTube_button, _Coub_button)
 
-    # low resolution selector
+    # Селектор низкого разрешения
     low_markup = types.ReplyKeyboardMarkup(row_width=1)
     _p_240_button = types.KeyboardButton("240p")
     _p_360_button = types.KeyboardButton("360p")
     _p_480_button = types.KeyboardButton("480p")
     low_markup.add(_p_240_button, _p_360_button, _p_480_button)
 
-    # high resolution selector
+    # Селектор высокого разрешения
     high_markup = types.ReplyKeyboardMarkup(row_width=1)
     _p_1080_button = types.KeyboardButton("1080p")
     _p_1440_button = types.KeyboardButton("1440p")
     _p_2160_button = types.KeyboardButton("2160p")
     high_markup.add(_p_1080_button, _p_1440_button, _p_2160_button)
 
-    # switcher
+    # Переключатель
     switch_markup = types.ReplyKeyboardMarkup(row_width=1)
     _on_button = types.KeyboardButton("ВКЛ")
     _off_button = types.KeyboardButton("ВЫКЛ")
     switch_markup.add(_on_button, _off_button)
 
-    # answer
+    # Ответ
     answer_markup = types.ReplyKeyboardMarkup(row_width=1)
     _yes_button = types.KeyboardButton("Да")
     _no_button = types.KeyboardButton("Нет")
     answer_markup.add(_yes_button, _no_button)
 
-    # to main
+    # Вернуться в главное меню
     cancel_markup = types.InlineKeyboardMarkup(row_width=1)
     _cancel_button = types.InlineKeyboardButton("Cancel", callback_data="cancel")
     cancel_markup.add(_cancel_button)
 
-    # remove keyboard
+    # Убрать клавиатуру
     remove = types.ReplyKeyboardRemove()

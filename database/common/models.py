@@ -1,14 +1,17 @@
 import peewee as pw
 from datetime import datetime
 
+# Инициализация подключения к базе данных SQLite
 db = pw.SqliteDatabase('tg_video_bot.db')
 
 
+# Базовая модель для остальных моделей
 class BaseModel(pw.Model):
     class Meta:
         database = db
 
 
+# Модель для хранения информации о пользователях
 class User(BaseModel):
     class Meta:
         db_table = "Users"
@@ -20,6 +23,7 @@ class User(BaseModel):
     last_name = pw.TextField(null=True)
 
 
+# Модель для хранения истории видео
 class History(BaseModel):
     user_id = pw.ForeignKeyField(User.user_id, null=True)
     history_id = pw.AutoField()
@@ -50,6 +54,7 @@ class History(BaseModel):
     file_size_2160 = pw.FloatField(null=True)  # 2160p file_size
 
 
+# Модель для хранения конфигураций пользователя
 class UserConfig(BaseModel):
     class Meta:
         db_table = "User_Config"

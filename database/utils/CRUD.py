@@ -6,11 +6,33 @@ T = TypeVar("T")
 
 
 def _store_date(database: db, model: T, data: Dict) -> None:
+    """
+        Сохраняет данные в базе данных.
+
+        Args:
+            database (db): Объект базы данных Peewee.
+            model (T): Модель Peewee для сохранения данных.
+            data (Dict): Словарь с данными для сохранения.
+
+        Returns:
+            None
+        """
     with database.atomic():
         model.insert(**data).execute()
 
 
 def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
+    """
+        Получает все данные из базы данных.
+
+        Args:
+            database (db): Объект базы данных Peewee.
+            model (T): Модель Peewee для извлечения данных.
+            user_id (int): Идентификатор пользователя.
+
+        Returns:
+            ModelSelect: Результат запроса к базе данных.
+    """
     with database.atomic():
         res = []
         if model is not History:
@@ -23,6 +45,18 @@ def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
 
 
 def _update_data(database: db, model: T, data: Dict, user_id: int) -> None:
+    """
+        Обновляет данные в базе данных.
+
+        Args:
+            database (db): Объект базы данных Peewee.
+            model (T): Модель Peewee для обновления данных.
+            data (Dict): Словарь с данными для обновления.
+            user_id (int): Идентификатор пользователя.
+
+        Returns:
+            None
+        """
     with database.atomic():
         if model is not History:
             model.update(**data).where(model.user_id == user_id).execute()
