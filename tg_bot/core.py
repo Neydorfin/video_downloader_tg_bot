@@ -261,6 +261,32 @@ def cancel(message: Message) -> None:
     main(message)
 
 
+@bot.message_handler(state=States.main, commands=['history'])
+def history(message: Message) -> None:
+    bot.send_message(message.chat.id, TeleText.history_questions, reply_markup=Buttons.remove)
+    bot.set_state(message.from_user.id, States.history, message.chat.id)
+
+
+@bot.message_handler(state=States.history)
+def history_print(message: Message) -> None:
+    queries = DataBase.read(DataBase.db, DataBase.models.History, message.from_user.id, limit=message.text)
+    user_config = DataBase.read(DataBase.db, DataBase.models.UserConfig, message.from_user.id)
+    for record in queries:
+        if user_config.info:
+            bot.send_photo(message.chat.id, record.thumbnail,
+                           caption=TeleText.history_video_info
+                           .format(title=record.title, time=record.time,
+                                   author=record.author, views=record.video_views,
+                                   date=record.created_at, link=record.link),
+                           parse_mode='Markdown')
+        else:
+            bot.send_photo(message.chat.id, record.thumbnail,
+                           caption=TeleText.history_video
+                           .format(title=record.title, date=record.created_at, link=record.link),
+                           parse_mode='Markdown')
+    cancel(message)
+
+
 # пользователь выбирает платформу с которой он будет скачивать видео
 @bot.message_handler(state=States.main, commands=['download'])
 def platform_select(message: Message) -> None:
@@ -332,37 +358,29 @@ def about_video(message: Message) -> None:
     if session.platform == "YouTube":
         try:
             data = SiteRequests.YouTube.get_info_youtube(message.text)
-        except BaseException:
-            bot.reply_to(message, text=TeleText.error_video, )
+        except:
+            bot.reply_to(message, text=TeleText.error_video)
             error = True
     elif session.platform == "Coub":
         try:
             data = SiteRequests.Coub.get_info_coub(message.text)
-        except BaseException:
-            bot.reply_to(message, text=TeleText.error_video, )
+        except:
+            bot.reply_to(message, text=TeleText.error_video)
             error = True
 
     if not error:
         # Отправка информации о видео с учетом настроек пользователя
-        if session.platform == "YouTube":
-            bot.reply_to(message, text=TeleText.about_video.format(img=data["thumbnail"],
-                                                                   title=data["title"],
-                                                                   time=data["time"],
-                                                                   low_res=user_config.low,
-                                                                   low=data[
-                                                                       "_".join(("file_size", str(user_config.low)))],
-                                                                   high_res=user_config.high,
-                                                                   high=data[
-                                                                       "_".join(("file_size", str(user_config.high)))],
-                                                                   default=data['file_size_720']),
-                         parse_mode='Markdown')
-        elif session.platform == "Coub":
-            bot.reply_to(message, text=TeleText.about_video_coub.format(img=data["thumbnail"],
-                                                                        title=data["title"],
-                                                                        time=data["time"],
-                                                                        low=data["file_size_360"],
-                                                                        high=data["file_size_720"]),
-                         parse_mode='Markdown')
+        if user_config.info:
+            bot.send_message(message.chat.id, text=TeleText.about_video_info
+                             .format(title=data["title"], time=data["time"],
+                                     author=data["author"], views=data["video_views"],
+                                     img=data['thumbnail']),
+                             parse_mode='Markdown', reply_to_message_id=message.id)
+        else:
+            bot.send_message(message.chat.id, text=TeleText.about_video
+                             .format(title=data["title"], time=data["time"],
+                                     img=data['thumbnail']),
+                             parse_mode='Markdown', reply_to_message_id=message.id)
 
         data.update({"link": message.text})
 
@@ -501,9 +519,6 @@ def default(message: Message) -> None:
     """
     # Получаем данные пользователя из базы данных
     session = DataBase.read(DataBase.db, DataBase.models.History, user_id=message.from_user.id)
-
-    # Инициализируем словарь для обновления данных
-    data = dict()
 
     # В зависимости от выбранной платформы устанавливаем разрешение по умолчанию
     if session.platform == "YouTube":

@@ -33,17 +33,14 @@ class TeleText:
     low: str = "Выбранно минимальное разрешение для скачивание видео"
     high: str = "Выбранно максимальное разрешение для скачивание видео"
     default: str = "Выбранно обычное разрешение для скачивание видео"
-    about_video: str = ("Назвние: [{title}]({img})\n"
-                        "Длина видео: {time}\n"
-                        "Размер файла ({low_res}p): {low} мб\n"
-                        "Размер файла ({high_res}p): {high} мб\n"
-                        "Размер файла (720p): {default} мб\n"
-                        "⚠️«Внимание!» Если размер файла будет превышать 50 мб то он не будет отправлен ⚠️")
-    about_video_coub: str = ("Назвние: [{title}]({img})\n"
-                             "Длина видео: {time} седунд\n"
-                             "Размер файла (360p): {low} мб\n"
-                             "Размер файла (720p): {high} мб\n")
-    resolution_select: str = ("Выберите разрешение:\n"
+    about_video: str = ("Название: [{title}]({img})\n"
+                        "Длина видео: {time}\n")
+    about_video_info: str = ("Название: [{title}]({img})\n"
+                             "Автор: {author}\n"
+                             "Длина видео: {time}\n"
+                             "Просмотры: {views}\n")
+    resolution_select: str = ("⚠️«Внимание!» Если размер файла будет превышать 50 мб то он не будет отправлен ⚠️\n"
+                              "Выберите разрешение:\n"
                               "/low - Размер файла ({low_res}p): {low} мб\n"
                               "/high- Размер файла ({high_res}p): {high} мб\n"
                               "/default - Размер файла (720p): {default} мб\n"
@@ -56,3 +53,11 @@ class TeleText:
     sending_video: str = "Видео отправленно"
     error_sending_video: str = "Ошибка. Размер файла слишком большой"
     cancel: str = "Назад в меню"
+    history_questions: str = "Введите какое максимальное количество записей вас интересует:"
+    history_video_info: str = ("Запрос: {date}\n"
+                               "Название: [{title}]({link})\n"
+                               "Автор: {author}\n"
+                               "Длина видео: {time} седунд\n"
+                               "Просмотры: {views}\n")
+    history_video: str = ("Запрос: {date}\n"
+                          "Название: [{title}]({link})\n")
