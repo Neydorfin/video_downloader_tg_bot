@@ -610,11 +610,12 @@ def send_video(message: Message) -> None:
     except:
         # Обработка ошибки: отправка сообщения об ошибке и перевод пользователя в состояние отмены
         bot.send_message(message.chat.id, TeleText.error_sending_video, reply_markup=Buttons.remove)
+        VideoMaker.delete_video(session)
         cancel(message)
     else:
         # Если успешно, отправка сообщения о завершении и перевод пользователя в главное состояние
         bot.send_message(message.chat.id, TeleText.sending_video, reply_markup=Buttons.remove)
-        bot.set_state(message.from_user.id, States.main, message.chat.id)
+        VideoMaker.delete_video(session)
         cancel(message)
 
 

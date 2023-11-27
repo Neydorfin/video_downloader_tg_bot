@@ -1,4 +1,5 @@
 import moviepy.editor as mpe
+import os
 
 
 class VideoMaker:
@@ -28,3 +29,8 @@ class VideoMaker:
         final_clip = video_clip.set_audio(audio_clip)
         # сохранить готовый клип
         final_clip.write_videofile(output)
+
+    @staticmethod
+    def delete_video(video):
+        if os.path.isfile(f"resources/video/{video.video_id}.mp4"):
+            os.remove(f"resources/video/{video.video_id}.mp4")
