@@ -263,16 +263,40 @@ def cancel(message: Message) -> None:
 
 @bot.message_handler(state=States.main, commands=['history'])
 def history(message: Message) -> None:
+    """
+    Обработчик команды '/history' в состоянии States.main.
+
+    Args:
+        message (Message): Объект сообщения от пользователя.
+
+    Returns:
+        None
+
+    """
     bot.send_message(message.chat.id, TeleText.history_questions, reply_markup=Buttons.remove)
     bot.set_state(message.from_user.id, States.history, message.chat.id)
 
 
 @bot.message_handler(state=States.history)
 def history_print(message: Message) -> None:
+    """
+    Обработчик сообщений в состоянии States.history.
+
+    Args:
+        message (Message): Объект сообщения от пользователя.
+
+    Returns:
+        None
+
+    """
+    # Чтение записей из базы данных истории для текущего пользователя с ограничением по тексту сообщения
     queries = DataBase.read(DataBase.db, DataBase.models.History, message.from_user.id, limit=message.text)
     user_config = DataBase.read(DataBase.db, DataBase.models.UserConfig, message.from_user.id)
+
+    # Отправка каждой записи в чат пользователя
     for record in queries:
         if user_config.info:
+            # Отправка изображения с дополнительной информацией в подписи, если включен режим подробной информации
             bot.send_photo(message.chat.id, record.thumbnail,
                            caption=TeleText.history_video_info
                            .format(title=record.title, time=record.time,
@@ -280,10 +304,13 @@ def history_print(message: Message) -> None:
                                    date=record.created_at, link=record.link),
                            parse_mode='Markdown')
         else:
+            # Отправка изображения с основной информацией в подписи
             bot.send_photo(message.chat.id, record.thumbnail,
                            caption=TeleText.history_video
                            .format(title=record.title, date=record.created_at, link=record.link),
                            parse_mode='Markdown')
+
+    # Вызов функции отмены (в данном контексте действие, завершающее состояние States.history)
     cancel(message)
 
 
