@@ -1,4 +1,4 @@
-from pytube import YouTube
+import pytube
 import time
 
 
@@ -36,7 +36,8 @@ def get_info_youtube(link):
                 data["_".join(("file_size", str(height)))] = round(new_file_size, 2)
 
     # Создает объект YouTube для предоставленной ссылки на видео
-    video = YouTube(link)
+    video = pytube.YouTube(link)
+    channel =  pytube.Channel(video.channel_url)
     # Преобразует длительность видео в формат ЧЧ:ММ:СС
     _time = time.strftime("%H:%M:%S", time.gmtime(video.length))
     # Задает разрешения видео, для которых нужно получить информацию
@@ -46,6 +47,7 @@ def get_info_youtube(link):
         "video_id": video.video_id,
         "title": video.title,
         "time": _time,
+        "author": channel.channel_name,
         "time_sec": video.length,
         "thumbnail": video.thumbnail_url,
         "audio": None,  # audio

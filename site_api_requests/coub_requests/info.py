@@ -43,6 +43,7 @@ def get_info_coub(link):
                              video_data["file_versions"]["html5"]["audio"]["high"]["size"]) / 1_000_000, 2)
     data = {
         "video_id": video_id,
+        "author": video_data["channel"]["title"],
         "title": video_data["title"],
         "time": video_data["duration"],
         "thumbnail": video_data["picture"],
