@@ -1,13 +1,14 @@
 import moviepy.editor as mpe
 import os
 
+from database.core import DataBase
 from utils.logging import logger
 
 
 class VideoMaker:
     @staticmethod
     @logger
-    def combine_audio(video, audio, output):
+    def combine_audio(video: str, audio: str, output: str) -> None:
         """
             Комбинирует видео и аудио, сохраняя результат в новом файле.
 
@@ -35,6 +36,6 @@ class VideoMaker:
 
     @staticmethod
     @logger
-    def delete_video(video):
+    def delete_video(video: DataBase.models.History) -> None:
         if os.path.isfile(f"resources/video/{video.video_id}.mp4"):
             os.remove(f"resources/video/{video.video_id}.mp4")

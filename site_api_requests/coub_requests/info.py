@@ -1,11 +1,10 @@
 from config import COUB_HOST_API
 import requests
-
 from utils.logging import logger
 
 
 @logger
-def pars_link(link: str):
+def pars_link(link: str) -> str:
     """
        Получает идентификатор видео из ссылки.
 
@@ -19,7 +18,7 @@ def pars_link(link: str):
 
 
 @logger
-def get_info_coub(link):
+def get_info_coub(link: str) -> dict:
     """
         Получает информацию о видео с Coub.
 

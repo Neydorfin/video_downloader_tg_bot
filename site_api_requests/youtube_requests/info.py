@@ -5,7 +5,7 @@ from utils.logging import logger
 
 
 @logger
-def get_info_youtube(link):
+def get_info_youtube(link: str) -> dict:
     """
         Получает информацию о видео с YouTube.
 
