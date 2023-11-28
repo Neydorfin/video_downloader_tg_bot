@@ -25,9 +25,12 @@ class User(BaseModel):
 
 # Модель для хранения истории видео
 class History(BaseModel):
+    class Meta:
+        db_table = "History"
     user_id = pw.ForeignKeyField(User.user_id, null=True)
     history_id = pw.AutoField()
-    created_at = pw.DateField(default=datetime.now())
+    created_at = pw.DateTimeField(default=datetime.now().strftime("%Y-%m-%d, %H:%M:%S"))
+    author = pw.TimeField(null=True)
     link = pw.TextField(null=True)
     video_id = pw.TextField(null=True)
     title = pw.TextField(null=True)

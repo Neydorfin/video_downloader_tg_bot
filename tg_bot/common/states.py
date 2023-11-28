@@ -7,6 +7,7 @@ class States(StatesGroup):
 
         States:
         - main: Главное состояние.
+        - history: История запросов.
         - custom: Настройка пользовательских параметров.
         - custom_low: Установка нижнего порога.
         - custom_high: Установка верхнего порога.
@@ -20,6 +21,7 @@ class States(StatesGroup):
         - send_video: Отправка видео в чат.
     """
     main = State()
+    history = State()
     custom = State()
     custom_low = State()
     custom_high = State()

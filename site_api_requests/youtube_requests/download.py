@@ -1,7 +1,9 @@
 from pytube import YouTube
 from database.core import DataBase
+from utils.logging import logger
 
 
+@logger
 def default_download(data: DataBase.models.History) -> None:
     """
         Скачивает видео с YouTube в наивысшем разрешении.

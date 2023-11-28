@@ -1,10 +1,12 @@
 from typing import Dict, TypeVar
 from peewee import ModelSelect
 from database.common.models import db, History, User, UserConfig
+from utils.logging import logger
 
 T = TypeVar("T")
 
 
+@logger
 def _store_date(database: db, model: T, data: Dict) -> None:
     """
         Сохраняет данные в базе данных.
@@ -21,7 +23,8 @@ def _store_date(database: db, model: T, data: Dict) -> None:
         model.insert(**data).execute()
 
 
-def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
+@logger
+def _retrieve_all_data(database: db, model: T, user_id: int, limit: int = 1) -> ModelSelect:
     """
         Получает все данные из базы данных.
 
@@ -40,10 +43,14 @@ def _retrieve_all_data(database: db, model: T, user_id: int) -> ModelSelect:
         else:
             for row in model.select().order_by(History.history_id.desc()).where(user_id == user_id).execute():
                 res.append(row)
-            response = res[0]
+            if limit == 1:
+                response = res[0]
+            else:
+                response = res[:int(limit) + 1]
     return response
 
 
+@logger
 def _update_data(database: db, model: T, data: Dict, user_id: int) -> None:
     """
         Обновляет данные в базе данных.
@@ -79,6 +86,4 @@ class CRUDInterface:
 
 
 if __name__ == "__main__":
-    _store_date()
-    _retrieve_all_data()
     CRUDInterface()
