@@ -1,9 +1,12 @@
 import moviepy.editor as mpe
 import os
 
+from utils.logging import logger
+
 
 class VideoMaker:
     @staticmethod
+    @logger
     def combine_audio(video, audio, output):
         """
             Комбинирует видео и аудио, сохраняя результат в новом файле.
@@ -31,6 +34,7 @@ class VideoMaker:
         final_clip.write_videofile(output)
 
     @staticmethod
+    @logger
     def delete_video(video):
         if os.path.isfile(f"resources/video/{video.video_id}.mp4"):
             os.remove(f"resources/video/{video.video_id}.mp4")

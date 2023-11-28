@@ -10,16 +10,16 @@ class Buttons:
 
     # Селектор низкого разрешения
     low_markup = types.ReplyKeyboardMarkup(row_width=1)
-    _p_240_button = types.KeyboardButton("240p")
-    _p_360_button = types.KeyboardButton("360p")
-    _p_480_button = types.KeyboardButton("480p")
+    _p_240_button = types.KeyboardButton("240")
+    _p_360_button = types.KeyboardButton("360")
+    _p_480_button = types.KeyboardButton("480")
     low_markup.add(_p_240_button, _p_360_button, _p_480_button)
 
     # Селектор высокого разрешения
     high_markup = types.ReplyKeyboardMarkup(row_width=1)
-    _p_1080_button = types.KeyboardButton("1080p")
-    _p_1440_button = types.KeyboardButton("1440p")
-    _p_2160_button = types.KeyboardButton("2160p")
+    _p_1080_button = types.KeyboardButton("1080")
+    _p_1440_button = types.KeyboardButton("1440")
+    _p_2160_button = types.KeyboardButton("2160")
     high_markup.add(_p_1080_button, _p_1440_button, _p_2160_button)
 
     # Переключатель

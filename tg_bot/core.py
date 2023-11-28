@@ -9,6 +9,7 @@ from tg_bot.utils.keyboard import Buttons
 from database.core import DataBase
 from site_api_requests.core import SiteRequests
 from video_procesing.video_combine_audio import VideoMaker
+from utils.logging import logger
 
 # Создание экземпляра StateMemoryStorage для хранения состояний пользователя в памяти
 state_storage = StateMemoryStorage()
@@ -18,6 +19,7 @@ state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BotSettings.BOT_TOKEN, state_storage=state_storage)
 
 
+@logger
 @bot.callback_query_handler(func=lambda call: True)
 def to_main(call: CallbackQuery) -> None:
     """
@@ -25,10 +27,11 @@ def to_main(call: CallbackQuery) -> None:
     """
     if call.data == "cancel":
         bot.delete_message(message_id=call.message.id, chat_id=call.message.chat.id)
-        main(call.message)
+        cancel(call.message)
 
 
 # МЕНЮ
+@logger
 @bot.message_handler(state="*", commands=['main'])
 def main(message: Message) -> None:
     """
@@ -45,6 +48,7 @@ def main(message: Message) -> None:
 
 
 # команда запуска бота
+@logger
 @bot.message_handler(commands=['start'])
 def start(message: Message) -> None:
     """
@@ -82,6 +86,7 @@ def start(message: Message) -> None:
 
 
 # команда вызова помощи
+@logger
 @bot.message_handler(state="*", commands=['help'])
 def help_command(message: Message) -> None:
     bot.send_message(message.chat.id, TeleText.help, reply_markup=Buttons.remove)
@@ -89,6 +94,7 @@ def help_command(message: Message) -> None:
 
 
 # команда вызова настроек
+@logger
 @bot.message_handler(commands=['custom'])
 def custom(message: Message) -> None:
     """
@@ -106,6 +112,7 @@ def custom(message: Message) -> None:
 
 
 # команда выбора минимального разрешение видео
+@logger
 @bot.message_handler(state=States.custom, commands=['low'])
 def custom_low(message: Message) -> None:
     """
@@ -124,6 +131,7 @@ def custom_low(message: Message) -> None:
 
 
 # установка минимального разрешение видео
+@logger
 @bot.message_handler(state=States.custom_low)
 def set_low_setting(message: Message) -> None:
     """
@@ -136,7 +144,7 @@ def set_low_setting(message: Message) -> None:
         None
     """
     # Проверка, что текст сообщения находится в списке допустимых разрешений
-    if message.text in ["240p", "360p", "480p"]:
+    if message.text in ["240", "360", "480"]:
         # Обновление настроек пользователя в базе данных
         DataBase.update(DataBase.db, DataBase.models.UserConfig, {"low": message.text}, message.from_user.id)
         # Отправка подтверждения пользователю
@@ -149,6 +157,7 @@ def set_low_setting(message: Message) -> None:
 
 
 # команда выбора максимального разрешение видео
+@logger
 @bot.message_handler(state=States.custom, commands=['high'])
 def custom_high(message: Message) -> None:
     """
@@ -167,6 +176,7 @@ def custom_high(message: Message) -> None:
 
 
 # установка максимального разрешение видео
+@logger
 @bot.message_handler(state=States.custom_high)
 def set_high_setting(message: Message) -> None:
     """
@@ -179,7 +189,7 @@ def set_high_setting(message: Message) -> None:
         None
     """
     # Проверка, является ли текст сообщения одним из поддерживаемых максимальных разрешений
-    if message.text in ["1080p", "1440p", "2160p"]:
+    if message.text in ["1080", "1440", "2160"]:
         # Обновление настроек пользователя в базе данных
         DataBase.update(DataBase.db, DataBase.models.UserConfig, {"high": message.text}, message.from_user.id)
         # Отправка сообщения о успешном установлении максимального разрешения
@@ -193,6 +203,7 @@ def set_high_setting(message: Message) -> None:
 
 
 # команда по поводу получение доп. информации про выидео
+@logger
 @bot.message_handler(state=States.custom, commands=['info'])
 def custom_info(message: Message) -> None:
     """
@@ -211,6 +222,7 @@ def custom_info(message: Message) -> None:
 
 
 # установка настроек доп. информации про выидео
+@logger
 @bot.message_handler(state=States.custom_info)
 def set_info_setting(message: Message) -> None:
     """
@@ -243,6 +255,7 @@ def set_info_setting(message: Message) -> None:
 
 
 # команда отмены
+@logger
 @bot.message_handler(state="*", commands=['cancel'])
 def cancel(message: Message) -> None:
     """
@@ -261,6 +274,7 @@ def cancel(message: Message) -> None:
     main(message)
 
 
+@logger
 @bot.message_handler(state=States.main, commands=['history'])
 def history(message: Message) -> None:
     """
@@ -277,6 +291,7 @@ def history(message: Message) -> None:
     bot.set_state(message.from_user.id, States.history, message.chat.id)
 
 
+@logger
 @bot.message_handler(state=States.history)
 def history_print(message: Message) -> None:
     """
@@ -294,28 +309,34 @@ def history_print(message: Message) -> None:
     user_config = DataBase.read(DataBase.db, DataBase.models.UserConfig, message.from_user.id)
 
     # Отправка каждой записи в чат пользователя
-    for record in queries:
-        if user_config.info:
-            # Отправка изображения с дополнительной информацией в подписи, если включен режим подробной информации
-            bot.send_photo(message.chat.id, record.thumbnail,
-                           caption=TeleText.history_video_info
-                           .format(title=record.title, time=record.time,
-                                   author=record.author, views=record.video_views,
-                                   date=record.created_at, link=record.link),
-                           parse_mode='Markdown')
-        else:
-            # Отправка изображения с основной информацией в подписи
-            bot.send_photo(message.chat.id, record.thumbnail,
-                           caption=TeleText.history_video
-                           .format(title=record.title, date=record.created_at, link=record.link),
-                           parse_mode='Markdown')
+    try:
+        for record in queries:
+            if user_config.info:
+                # Отправка изображения с дополнительной информацией в подписи, если включен режим подробной информации
+                if record.thumbnail:
+                    bot.send_photo(message.chat.id, record.thumbnail,
+                                   caption=TeleText.history_video_info
+                                   .format(title=record.title, time=record.time,
+                                           author=record.author, views=record.video_views,
+                                           date=record.created_at, link=record.link),
+                                   parse_mode='Markdown')
+            else:
+                # Отправка изображения с основной информацией в подписи
+                if record.thumbnail:
+                    bot.send_photo(message.chat.id, record.thumbnail,
+                                   caption=TeleText.history_video
+                                   .format(title=record.title, date=record.created_at, link=record.link),
+                                   parse_mode='Markdown')
+    except:
+        bot.send_message(message.chat.id, TeleText.history_error, reply_markup=Buttons.remove)
 
     # Вызов функции отмены (в данном контексте действие, завершающее состояние States.history)
     cancel(message)
 
 
 # пользователь выбирает платформу с которой он будет скачивать видео
-@bot.message_handler(state=States.main, commands=['download'])
+@logger
+@bot.message_handler(state=[States.main, States.custom], commands=['download'])
 def platform_select(message: Message) -> None:
     """
     Обработчик команды выбора платформы для скачивания видео в основном состоянии.
@@ -333,6 +354,7 @@ def platform_select(message: Message) -> None:
 
 
 # читаем ссылку от пользователя
+@logger
 @bot.message_handler(state=States.platform_select)
 def video_select(message: Message) -> None:
     """
@@ -364,6 +386,7 @@ def video_select(message: Message) -> None:
 
 
 # выво информации об видео с вопросом о продолжение скачивание
+@logger
 @bot.message_handler(state=States.video_select)
 def about_video(message: Message) -> None:
     """
@@ -420,6 +443,7 @@ def about_video(message: Message) -> None:
         cancel(message)
 
 
+@logger
 @bot.message_handler(state=States.about_video)  # выбор разрешение видео
 def resolution_select(message: Message) -> None:
     """
@@ -457,6 +481,7 @@ def resolution_select(message: Message) -> None:
         bot.set_state(message.from_user.id, States.resolution_select, message.chat.id)
 
 
+@logger
 @bot.message_handler(state=States.resolution_select, commands=['low'])  # выбор минимального разрешение
 def low(message: Message) -> None:
     """
@@ -495,6 +520,7 @@ def low(message: Message) -> None:
 
 
 # выбор максимального разрешение
+@logger
 @bot.message_handler(state=States.resolution_select, commands=['high'])
 def high(message: Message) -> None:
     """
@@ -533,6 +559,7 @@ def high(message: Message) -> None:
 
 
 # выбор разрешение по умолчанию
+@logger
 @bot.message_handler(state=States.resolution_select, commands=['default'])
 def default(message: Message) -> None:
     """
@@ -571,6 +598,7 @@ def default(message: Message) -> None:
 
 
 # скачивание видео
+@logger
 @bot.message_handler(state=States.download)
 def download(message: Message) -> None:
     """
@@ -598,6 +626,7 @@ def download(message: Message) -> None:
 
 
 # обработка видео
+@logger
 @bot.message_handler(state=States.video_maker)
 def video_maker(message: Message) -> None:
     """
@@ -628,6 +657,7 @@ def video_maker(message: Message) -> None:
 
 
 # отправка видео
+@logger
 @bot.message_handler(state=States.send_video)
 def send_video(message: Message) -> None:
     """
@@ -661,6 +691,7 @@ def send_video(message: Message) -> None:
         cancel(message)
 
 
+@logger
 def run():
     """
         Запуск бота.

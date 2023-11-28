@@ -1,7 +1,10 @@
 import pytube
 import time
 
+from utils.logging import logger
 
+
+@logger
 def get_info_youtube(link):
     """
         Получает информацию о видео с YouTube.
@@ -13,6 +16,7 @@ def get_info_youtube(link):
             dict: Информация о видео.
     """
 
+    @logger
     def get_data(height: int) -> None:
         """
             Обновляет информацию о видео для заданного разрешения.
@@ -25,7 +29,7 @@ def get_info_youtube(link):
         """
         if height in heights:
             # Рассчитывает новый размер файла с учетом аудио и видео
-            new_file_size = video.streams.get_by_itag(frmt["itag"]).filesize_mb + audio_size
+            new_file_size = (video.streams.get_by_itag(frmt["itag"]).filesize_mb + audio_size) * 1.5
             # Получает старый размер файла
             old_file_size = data["_".join(("file_size", str(height)))]
 
@@ -37,7 +41,7 @@ def get_info_youtube(link):
 
     # Создает объект YouTube для предоставленной ссылки на видео
     video = pytube.YouTube(link)
-    channel =  pytube.Channel(video.channel_url)
+    channel = pytube.Channel(video.channel_url)
     # Преобразует длительность видео в формат ЧЧ:ММ:СС
     _time = time.strftime("%H:%M:%S", time.gmtime(video.length))
     # Задает разрешения видео, для которых нужно получить информацию
